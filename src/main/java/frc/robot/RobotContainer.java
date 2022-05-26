@@ -24,7 +24,9 @@ import frc.robot.commands.intake.ReverseIntake;
 import frc.robot.commands.auto.ShootPreloadedExit;
 import frc.robot.commands.auto.ShootThreeStart;
 import frc.robot.commands.climb.Climb;
+import frc.robot.commands.climb.StageTwoClimb;
 import frc.robot.commands.climb.TurnOnClimbMode;
+import frc.robot.commands.climb.toggleDefaultCommand;
 import frc.robot.commands.drive.DriveWithJoystick;
 import frc.robot.commands.outtake.OuttakeHigh;
 import frc.robot.commands.outtake.OuttakeLow;
@@ -68,6 +70,11 @@ public class RobotContainer {
   private Command reverseIntake;
 
   private Command climbCmd;
+
+  private Command stage2;
+
+  private Command toggleDefaultCommand;
+
   private Command climbModeEnable;
   private Command reverseAll;
   private Command reverseOuttake;
@@ -96,6 +103,7 @@ public class RobotContainer {
   private JoystickButton op_reverseAllBtn;
   private JoystickButton op_manualUptakeBtn;
   private Trigger op_outtakeLowBtn;
+  private Trigger changeClimbCommand;
 
   private SendableChooser<Command> autoChooser;
   private Command driveToCargo;
@@ -136,6 +144,7 @@ public class RobotContainer {
     op_reverseAllBtn = new JoystickButton(operator, OP_REVERSE_ALL_BTN); // X button
     op_toggleSlowModeBtn = new JoystickButton(operator, OP_TOGGLE_SLOW_BTN); // Back/Select Button
     op_manualUptakeBtn = new JoystickButton(operator, OP_MANUAL_UPTAKE_BTN); // A button
+    changeClimbCommand = new Trigger(() -> { return (operator.getRightTriggerAxis() >= 0.8); }); // Right trigger
 
     // Toggle Commands
     toggleFieldOriented = new InstantCommand(driveSystem::toggleFieldOriented, driveSystem);
@@ -143,6 +152,7 @@ public class RobotContainer {
     toggleTurboMode = new InstantCommand(driveSystem::toggleTurboMode, driveSystem);
     resetIntakeEncoders = new InstantCommand(intake::resetEncoders, intake);
     toggleLimelight = new InstantCommand(limelight::toggleDriverMode);
+    toggleDefaultCommand = new toggleDefaultCommand(climb, operator);
 
     // Drive With Joystick
     driveWithJoystick = new DriveWithJoystick(driveSystem, driver);
@@ -170,9 +180,16 @@ public class RobotContainer {
     // Climb
     climbCmd = new Climb(climb, operator);
     climbModeEnable = new TurnOnClimbMode(climb, intake);
+    stage2 = new StageTwoClimb(climb, operator);
+
+
     climb.setDefaultCommand(climbCmd);
 
     climb.resetLiftEncoders();
+
+    changeClimbCommand.whileActiveContinuous(toggleDefaultCommand);
+
+    
 
     // Configure the button bindings
     configureButtonBindings();
